@@ -56,7 +56,7 @@ module.exports = {
       }
 
       // Si l'utilisateur n'est pas connecté, continuer comme avant
-      const link = `https://coachfoot.com/api/link?username=${discordId}`;
+      const link = `https://coachfoot.com/discord/link?username=${discordId}`;
 
       if (userEntry) {
         // Mettre à jour l'entrée existante si nécessaire
