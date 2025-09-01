@@ -19,6 +19,17 @@ router.post("/", (req, res) => {
     const dbRaw = fs.readFileSync(dbPath, "utf8");
     const db = JSON.parse(dbRaw);
 
+    // Vérifier si le coachfoot_id est déjà utilisé par un autre compte
+    const existingCoachFootUser = db.users.find(
+      (u) => u.coachfoot_id === coachfoot_id && u.discord_id !== discord_id
+    );
+
+    if (existingCoachFootUser) {
+      return res.status(409).json({
+        error: "Ce compte CoachFoot est déjà lié à un autre compte Discord.",
+      });
+    }
+
     const userIndex = db.users.findIndex((u) => u.discord_id === discord_id);
 
     if (userIndex === -1) {
@@ -26,12 +37,9 @@ router.post("/", (req, res) => {
     }
 
     if (db.users[userIndex].status !== "waiting") {
-      return res
-        .status(409)
-        .json({
-          error:
-            "Le statut de l'utilisateur n'est pas en attente de validation.",
-        });
+      return res.status(409).json({
+        error: "Le statut de l'utilisateur n'est pas en attente de validation.",
+      });
     }
 
     // Mettre à jour l'utilisateur
