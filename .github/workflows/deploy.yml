@@ -1,0 +1,34 @@
+# .github/workflows/deploy.yml
+
+name: Deploy to VPS
+
+# Se déclenche à chaque push sur la branche 'main'
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest # Le type de machine que GitHub va utiliser
+
+    steps:
+      # 1. Se connecte au VPS et exécute les commandes
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          script: |
+            # Aller dans le dossier du projet
+            cd ${{ secrets.PROJECT_PATH }}
+
+            # Mettre à jour le code depuis GitHub
+            git pull origin main
+
+            # Installer les dépendances (si package.json a changé)
+            npm install
+
+            # Redémarrer le service systemd
+            sudo systemctl restart coachbot
