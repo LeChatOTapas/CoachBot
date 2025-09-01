@@ -35,6 +35,29 @@ module.exports = {
       const db = readDb();
       let userEntry = db.users.find((u) => u.discord_id === discordId);
 
+      // Vérifier si l'utilisateur est déjà connecté
+      if (userEntry && userEntry.status === "connected") {
+        const alreadyLinkedEmbed = new EmbedBuilder()
+          .setColor(0xffcc00)
+          .setTitle("Compte déjà lié")
+          .setDescription(
+            "Votre compte Discord est déjà associé à un compte CoachFoot."
+          )
+          .addFields({
+            name: "ID CoachFoot",
+            value: `\`${userEntry.coachfoot_id}\``,
+          })
+          .setTimestamp();
+
+        return interaction.reply({
+          embeds: [alreadyLinkedEmbed],
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      // Si l'utilisateur n'est pas connecté, continuer comme avant
+      const link = `https://coachfoot.com/api/link?username=${discordId}`;
+
       if (userEntry) {
         // Mettre à jour l'entrée existante si nécessaire
         userEntry.status = "waiting";
