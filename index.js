@@ -3,11 +3,15 @@ require("dotenv").config(); // Pour charger les variables d'environnement depuis
 const { Client, GatewayIntentBits, Events } = require("discord.js");
 const slashCommandHandler = require("./handlers/slashCommandHandler");
 const express = require("express");
+const morgan = require("morgan");
+const logger = require("./logger");
 const linkRoute = require("./api/link"); // Importer la nouvelle route
 
 // --- Configuration du serveur Express ---
 const app = express();
 app.use(express.json()); // Pour parser les corps de requête en JSON
+// Utiliser Morgan pour les logs HTTP, en le connectant à Winston
+app.use(morgan("combined", { stream: logger.stream }));
 const port = process.env.PORT || 3000;
 
 // Utiliser la route pour toutes les requêtes vers /link
@@ -28,10 +32,10 @@ slashCommandHandler(client);
 
 // Quand le client est prêt, afficher un message dans la console
 client.once(Events.ClientReady, () => {
-  console.log(`Connecté en tant que ${client.user.tag}!`);
+  logger.info(`Connecté en tant que ${client.user.tag}!`);
   // Démarrer le serveur Express une fois que le bot est connecté
   app.listen(port, () => {
-    console.log(`Serveur de validation écoutant sur http://localhost:${port}`);
+    logger.info(`Serveur de validation écoutant sur http://localhost:${port}`);
   });
 });
 

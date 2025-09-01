@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const fs = require("fs");
 const path = require("path");
+const logger = require("../logger");
 
 const dbPath = path.join(__dirname, "..", "database.json");
 
@@ -10,6 +11,7 @@ function readDb() {
   // Si le fichier n'existe pas, on le crée avec une structure vide
   if (!fs.existsSync(dbPath)) {
     fs.writeFileSync(dbPath, JSON.stringify({ users: [] }, null, 2));
+    logger.info("database.json created as it did not exist.");
   }
 
   try {
@@ -25,8 +27,8 @@ function readDb() {
     }
     return db;
   } catch (error) {
-    console.error(
-      "Erreur critique lors de la lecture ou du parsing de database.json:",
+    logger.error(
+      "Critical error while reading or parsing database.json:",
       error
     );
     // En cas d'erreur de parsing, on retourne une structure vide pour éviter un crash
@@ -42,8 +44,16 @@ function writeDb(data) {
 // Cette route répondra à POST /link/
 router.post("/", (req, res) => {
   const { discord_id, coachfoot_id } = req.body;
+  logger.info(
+    `Received validation request for discord_id: ${discord_id} and coachfoot_id: ${coachfoot_id}`
+  );
 
   if (!discord_id || !coachfoot_id) {
+    logger.warn(
+      `Validation request rejected: missing discord_id or coachfoot_id. Body: ${JSON.stringify(
+        req.body
+      )}`
+    );
     return res
       .status(400)
       .json({ error: "discord_id et coachfoot_id sont requis." });
@@ -58,6 +68,9 @@ router.post("/", (req, res) => {
     );
 
     if (existingCoachFootUser) {
+      logger.warn(
+        `Validation rejected: coachfoot_id ${coachfoot_id} already linked to another Discord account (${existingCoachFootUser.discord_id}).`
+      );
       return res.status(409).json({
         error: "Ce compte CoachFoot est déjà lié à un autre compte Discord.",
       });
@@ -66,10 +79,16 @@ router.post("/", (req, res) => {
     const userIndex = db.users.findIndex((u) => u.discord_id === discord_id);
 
     if (userIndex === -1) {
+      logger.warn(
+        `Validation rejected: User with discord_id ${discord_id} not found in database.`
+      );
       return res.status(404).json({ error: "Utilisateur non trouvé." });
     }
 
     if (db.users[userIndex].status !== "waiting") {
+      logger.warn(
+        `Validation rejected: User ${discord_id} status is '${db.users[userIndex].status}', not 'waiting'.`
+      );
       return res.status(409).json({
         error: "Le statut de l'utilisateur n'est pas en attente de validation.",
       });
@@ -81,9 +100,15 @@ router.post("/", (req, res) => {
 
     writeDb(db);
 
+    logger.info(
+      `Successfully validated and linked discord_id ${discord_id} to coachfoot_id ${coachfoot_id}.`
+    );
     res.status(201).json({ status: "validated" });
   } catch (error) {
-    console.error("Erreur lors de la validation:", error);
+    logger.error(
+      `Error during validation for discord_id ${discord_id}:`,
+      error
+    );
     res.status(500).json({ error: "Erreur interne du serveur." });
   }
 });
