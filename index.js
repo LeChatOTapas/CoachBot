@@ -10,7 +10,13 @@ const linkRoute = require("./api/link"); // Importer la nouvelle route
 // --- Configuration du serveur Express ---
 const app = express();
 app.use(express.json()); // Pour parser les corps de requête en JSON
-// Utiliser Morgan pour les logs HTTP, en le connectant à Winston
+
+// En développement, utiliser le format 'dev' pour des logs de requête colorés et concis dans la console
+if (process.env.NODE_ENV !== "production") {
+  app.use(morgan("dev"));
+}
+
+// Utiliser Morgan pour les logs HTTP, en le connectant à Winston pour les fichiers
 app.use(morgan("combined", { stream: logger.stream }));
 const port = process.env.PORT || 3000;
 
