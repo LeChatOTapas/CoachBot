@@ -5,8 +5,10 @@ module.exports = {
     .setName("ping")
     .setDescription("Affiche la latence du bot et de l'API Discord."),
   async execute(interaction) {
-    await interaction.reply("Ping...");
-    const sent = await interaction.fetchReply();
+    const sent = await interaction.reply({
+      content: "Ping...",
+      fetchReply: true,
+    });
     const botLatency = sent.createdTimestamp - interaction.createdTimestamp;
     const apiLatency = Math.round(interaction.client.ws.ping);
 

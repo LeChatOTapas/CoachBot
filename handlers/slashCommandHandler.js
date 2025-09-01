@@ -1,6 +1,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
-const { Collection } = require("discord.js");
+const { Collection, MessageFlags } = require("discord.js");
 
 module.exports = (client) => {
   client.commands = new Collection();
