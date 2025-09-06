@@ -32,7 +32,23 @@ module.exports = {
           .setDescription(
             targetUser.id === interaction.user.id
               ? "Aucun profil trouvé. Utilisez /link pour démarrer la liaison."
-              : "Aucun profil n'a été trouvé pour cet utilisateur."
+              : "Impossible d'afficher ce profil, cette personne n'a pas lié son compte Discord et CoachFoot."
+          )
+          .setTimestamp();
+
+        return interaction.reply({ embeds: [embed], ephemeral: true });
+      }
+
+      // Si on consulte quelqu'un d'autre et que son compte n'est pas lié, bloquer l'affichage
+      if (
+        targetUser.id !== interaction.user.id &&
+        (row.status !== "connected" || !row.coachfoot_id)
+      ) {
+        const embed = new EmbedBuilder()
+          .setColor(0xe74c3c)
+          .setTitle("Profil non accessible")
+          .setDescription(
+            "Impossible d'afficher ce profil, cette personne n'a pas lié son compte Discord et CoachFoot."
           )
           .setTimestamp();
 
@@ -77,8 +93,8 @@ module.exports = {
         .addFields(
           { name: "Discord", value: `@${targetUser.username}`, inline: true },
           {
-            name: "CoachFoot ID",
-            value: row.coachfoot_id ? `\`${row.coachfoot_id}\`` : "Non lié",
+            name: "Pseudo CoachFoot",
+            value: row.pseudo ? `\`${row.pseudo}\`` : "Non lié",
             inline: true,
           },
           { name: "Players", value: playersPreview }
