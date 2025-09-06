@@ -40,6 +40,18 @@ router.post("/", (req, res) => {
       .json({ error: "discord_id et coachfoot_id sont requis." });
   }
 
+  // pseudo is now required and must be a non-empty string
+  if (typeof pseudo !== "string" || pseudo.trim() === "") {
+    logger.warn(
+      `Validation request rejected: invalid or missing pseudo. Body: ${JSON.stringify(
+        req.body
+      )}`
+    );
+    return res
+      .status(400)
+      .json({ error: "pseudo est requis et doit être une chaîne non vide." });
+  }
+
   try {
     // Vérifier si le coachfoot_id est déjà utilisé par un autre compte
     const existingCoachFootUser = selectByCoachFootIdNotDiscord.get(
@@ -74,10 +86,7 @@ router.post("/", (req, res) => {
       });
     }
 
-    // Validation de type pour pseudo et players (facultatifs)
-    if (pseudo !== undefined && typeof pseudo !== "string") {
-      return res.status(400).json({ error: "pseudo doit être une chaîne." });
-    }
+    // Validation de type pour players (optionnel)
     if (players !== undefined && !Array.isArray(players)) {
       return res.status(400).json({ error: "players doit être un tableau." });
     }
@@ -87,7 +96,7 @@ router.post("/", (req, res) => {
       coachfoot_id: String(coachfoot_id),
       username: userRow.username, // conserver le username enregistré à l'étape /link du bot
       status: "connected",
-      pseudo: pseudo ?? null,
+      pseudo: pseudo.trim(),
       players_json: players ? JSON.stringify(players) : null,
     };
 

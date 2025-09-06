@@ -35,10 +35,16 @@ module.exports = {
           .setDescription(
             "Votre compte Discord est déjà associé à un compte CoachFoot."
           )
-          .addFields({
-            name: "ID CoachFoot",
-            value: `\`${userEntry.coachfoot_id}\``,
-          })
+          .addFields(
+            {
+              name: "Pseudo CoachFoot",
+              value: `\`${userEntry.pseudo || "Inconnu"}\``,
+            },
+            {
+              name: "ID CoachFoot",
+              value: `\`${userEntry.coachfoot_id}\``,
+            }
+          )
           .setTimestamp();
 
         return interaction.reply({
