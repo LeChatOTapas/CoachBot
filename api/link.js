@@ -1,51 +1,32 @@
 const express = require("express");
 const router = express.Router();
-const fs = require("fs");
-const path = require("path");
 const logger = require("../logger");
+const db = require("../db");
 
-const dbPath = path.join(__dirname, "..", "database.json");
-
-// Fonction sécurisée pour lire la base de données
-function readDb() {
-  // Si le fichier n'existe pas, on le crée avec une structure vide
-  if (!fs.existsSync(dbPath)) {
-    fs.writeFileSync(dbPath, JSON.stringify({ users: [] }, null, 2));
-    logger.info("database.json created as it did not exist.");
-  }
-
-  try {
-    const data = fs.readFileSync(dbPath, "utf8");
-    // Gère le cas où le fichier est vide
-    if (data === "") {
-      return { users: [] };
-    }
-    const db = JSON.parse(data);
-    // S'assure que la propriété 'users' existe
-    if (!db.users) {
-      db.users = [];
-    }
-    return db;
-  } catch (error) {
-    logger.error(
-      "Critical error while reading or parsing database.json:",
-      error
-    );
-    // En cas d'erreur de parsing, on retourne une structure vide pour éviter un crash
-    return { users: [] };
-  }
-}
-
-// Fonction pour écrire dans la base de données
-function writeDb(data) {
-  fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
-}
+// Prepared statements
+const selectByDiscordId = db.prepare(
+  "SELECT * FROM users WHERE discord_id = ?"
+);
+const selectByCoachFootIdNotDiscord = db.prepare(
+  "SELECT * FROM users WHERE coachfoot_id = ? AND discord_id <> ?"
+);
+const insertUser = db.prepare(
+  `INSERT INTO users (discord_id, username, status, coachfoot_id, pseudo, players_json)
+   VALUES (@discord_id, @username, @status, @coachfoot_id, @pseudo, @players_json)`
+);
+const updateUserLink = db.prepare(
+  `UPDATE users
+   SET status = 'connected', coachfoot_id = @coachfoot_id, pseudo = @pseudo, players_json = @players_json
+   WHERE discord_id = @discord_id`
+);
 
 // Cette route répondra à POST /link/
 router.post("/", (req, res) => {
-  const { discord_id, coachfoot_id } = req.body;
+  const { discord_id, coachfoot_id, pseudo, players, username } = req.body;
   logger.info(
-    `Received validation request for discord_id: ${discord_id} and coachfoot_id: ${coachfoot_id}`
+    `Received validation request for discord_id: ${discord_id}, coachfoot_id: ${coachfoot_id}, pseudo: ${pseudo}, players: ${
+      Array.isArray(players) ? players.length : typeof players
+    }, username: ${username}`
   );
 
   if (!discord_id || !coachfoot_id) {
@@ -60,11 +41,10 @@ router.post("/", (req, res) => {
   }
 
   try {
-    const db = readDb();
-
     // Vérifier si le coachfoot_id est déjà utilisé par un autre compte
-    const existingCoachFootUser = db.users.find(
-      (u) => u.coachfoot_id === coachfoot_id && u.discord_id !== discord_id
+    const existingCoachFootUser = selectByCoachFootIdNotDiscord.get(
+      coachfoot_id,
+      discord_id
     );
 
     if (existingCoachFootUser) {
@@ -76,29 +56,42 @@ router.post("/", (req, res) => {
       });
     }
 
-    const userIndex = db.users.findIndex((u) => u.discord_id === discord_id);
+    const userRow = selectByDiscordId.get(discord_id);
 
-    if (userIndex === -1) {
+    if (!userRow) {
       logger.warn(
         `Validation rejected: User with discord_id ${discord_id} not found in database.`
       );
       return res.status(404).json({ error: "Utilisateur non trouvé." });
     }
 
-    if (db.users[userIndex].status !== "waiting") {
+    if (userRow.status !== "waiting") {
       logger.warn(
-        `Validation rejected: User ${discord_id} status is '${db.users[userIndex].status}', not 'waiting'.`
+        `Validation rejected: User ${discord_id} status is '${userRow.status}', not 'waiting'.`
       );
       return res.status(409).json({
         error: "Le statut de l'utilisateur n'est pas en attente de validation.",
       });
     }
 
-    // Mettre à jour l'utilisateur
-    db.users[userIndex].status = "connected";
-    db.users[userIndex].coachfoot_id = coachfoot_id;
+    // Validation de type pour pseudo et players (facultatifs)
+    if (pseudo !== undefined && typeof pseudo !== "string") {
+      return res.status(400).json({ error: "pseudo doit être une chaîne." });
+    }
+    if (players !== undefined && !Array.isArray(players)) {
+      return res.status(400).json({ error: "players doit être un tableau." });
+    }
 
-    writeDb(db);
+    const payload = {
+      discord_id,
+      coachfoot_id: String(coachfoot_id),
+      username: userRow.username, // conserver le username enregistré à l'étape /link du bot
+      status: "connected",
+      pseudo: pseudo ?? null,
+      players_json: players ? JSON.stringify(players) : null,
+    };
+
+    updateUserLink.run(payload);
 
     logger.info(
       `Successfully validated and linked discord_id ${discord_id} to coachfoot_id ${coachfoot_id}.`

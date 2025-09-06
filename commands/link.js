@@ -1,22 +1,19 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
-const fs = require("fs");
-const path = require("path");
+const db = require("../db");
 
-const dbPath = path.join(__dirname, "..", "database.json");
-
-// Fonction pour lire la base de données
-function readDb() {
-  if (!fs.existsSync(dbPath)) {
-    fs.writeFileSync(dbPath, JSON.stringify({ users: [] }, null, 2));
-  }
-  const data = fs.readFileSync(dbPath, "utf8");
-  return JSON.parse(data);
-}
-
-// Fonction pour écrire dans la base de données
-function writeDb(data) {
-  fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
-}
+// Prepared statements
+const selectByDiscordId = db.prepare(
+  "SELECT * FROM users WHERE discord_id = ?"
+);
+const insertWaitingUser = db.prepare(
+  `INSERT INTO users (discord_id, username, status, coachfoot_id, pseudo, players_json)
+   VALUES (@discord_id, @username, 'waiting', NULL, NULL, NULL)`
+);
+const updateToWaiting = db.prepare(
+  `UPDATE users
+   SET status = 'waiting', coachfoot_id = NULL, pseudo = NULL, players_json = NULL, username = @username
+   WHERE discord_id = @discord_id`
+);
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -28,8 +25,7 @@ module.exports = {
     const link = `https://coachfoot.com/api/link?username=${discordId}`;
 
     try {
-      const db = readDb();
-      let userEntry = db.users.find((u) => u.discord_id === discordId);
+      const userEntry = selectByDiscordId.get(discordId);
 
       // Vérifier si l'utilisateur est déjà connecté
       if (userEntry && userEntry.status === "connected") {
@@ -55,20 +51,12 @@ module.exports = {
       // le lien a déjà été défini plus haut
 
       if (userEntry) {
-        // Mettre à jour l'entrée existante si nécessaire
-        userEntry.status = "waiting";
-        userEntry.coachfoot_id = null; // Réinitialiser au cas où
+        // Mettre à jour l'entrée existante en 'waiting' et réinitialiser les champs de lien
+        updateToWaiting.run({ discord_id: discordId, username });
       } else {
-        // Ajouter une nouvelle entrée
-        db.users.push({
-          discord_id: discordId,
-          username: username,
-          status: "waiting",
-          coachfoot_id: null,
-        });
+        // Ajouter une nouvelle entrée en 'waiting'
+        insertWaitingUser.run({ discord_id: discordId, username });
       }
-
-      writeDb(db);
 
       const embed = new EmbedBuilder()
         .setColor(0x0099ff)
