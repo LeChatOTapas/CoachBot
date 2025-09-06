@@ -1,8 +1,4 @@
-const {
-  SlashCommandBuilder,
-  EmbedBuilder,
-  MessageFlags,
-} = require("discord.js");
+const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
 
@@ -51,12 +47,12 @@ module.exports = {
 
         return interaction.reply({
           embeds: [alreadyLinkedEmbed],
-          flags: MessageFlags.Ephemeral,
+          ephemeral: true,
         });
       }
 
       // Si l'utilisateur n'est pas connecté, continuer comme avant
-      const link = `https://coachfoot.com/discord/link?username=${discordId}`;
+      // le lien a déjà été défini plus haut
 
       if (userEntry) {
         // Mettre à jour l'entrée existante si nécessaire
@@ -85,7 +81,7 @@ module.exports = {
 
       await interaction.reply({
         embeds: [embed],
-        flags: MessageFlags.Ephemeral,
+        ephemeral: true,
       });
     } catch (error) {
       console.error(
@@ -95,7 +91,7 @@ module.exports = {
       await interaction.reply({
         content:
           "Une erreur est survenue lors de la création de votre lien. Veuillez réessayer.",
-        flags: MessageFlags.Ephemeral,
+        ephemeral: true,
       });
     }
   },
