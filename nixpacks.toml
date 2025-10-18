@@ -1,2 +1,5 @@
+# Contenu de votre nouveau nixpacks.toml
+
 [phases.setup]
-nixPkgs = ["python3"]
+# Inclure nodejs (pour 'node' et 'npm') ET python3 (pour 'better-sqlite3')
+nixPkgs = ["nodejs", "npm", "python3"]
