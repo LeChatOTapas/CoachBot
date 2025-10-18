@@ -1,5 +1,5 @@
-# Contenu de votre nouveau nixpacks.toml
+# Contenu du nouveau nixpacks.toml
 
 [phases.setup]
-# Inclure nodejs (pour 'node' et 'npm') ET python3 (pour 'better-sqlite3')
-nixPkgs = ["nodejs", "npm", "python3"]
+# Utiliser 'nodejs-20_x' pour spécifier Node.js 20 et inclure npm
+nixPkgs = ["nodejs-20_x", "python3"]
