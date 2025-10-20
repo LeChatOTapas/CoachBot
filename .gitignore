@@ -1,4 +1,4 @@
 node_modules
 .env
 logs/
-db/coachbot.sqlite
+db/*.sqlite
