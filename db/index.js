@@ -18,8 +18,24 @@ try {
   // Test write permissions
   fs.accessSync(__dirname, fs.constants.W_OK);
   console.log("DB directory is writable");
+
+  // Check if DB file already exists
+  if (fs.existsSync(dbFile)) {
+    console.log("DB file already exists");
+    const stats = fs.statSync(dbFile);
+    console.log("DB file size:", stats.size, "bytes");
+    console.log("DB file permissions:", stats.mode.toString(8));
+  } else {
+    console.log("DB file does not exist, will be created");
+  }
+
+  // Test creating a simple test file in the directory
+  const testFile = path.join(__dirname, "test.tmp");
+  fs.writeFileSync(testFile, "test");
+  fs.unlinkSync(testFile);
+  console.log("Test file creation successful");
 } catch (error) {
-  console.error("DB directory permission error:", error.message);
+  console.error("DB directory/file error:", error.message);
   throw error;
 }
 
