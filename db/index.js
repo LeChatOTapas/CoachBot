@@ -4,7 +4,26 @@ const Database = require("better-sqlite3");
 
 const dbFile = path.join(__dirname, "coachbot.sqlite");
 
-// Ensure directory exists (it does from create_directory), and DB file will be created automatically
+// Debug: log paths and permissions
+console.log("DB directory:", __dirname);
+console.log("DB file path:", dbFile);
+
+// Ensure directory exists and is writable
+try {
+  if (!fs.existsSync(__dirname)) {
+    console.log("Creating DB directory...");
+    fs.mkdirSync(__dirname, { recursive: true });
+  }
+
+  // Test write permissions
+  fs.accessSync(__dirname, fs.constants.W_OK);
+  console.log("DB directory is writable");
+} catch (error) {
+  console.error("DB directory permission error:", error.message);
+  throw error;
+}
+
+console.log("Opening SQLite database...");
 const db = new Database(dbFile);
 
 db.pragma("journal_mode = WAL"); // better concurrency
