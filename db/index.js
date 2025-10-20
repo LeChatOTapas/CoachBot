@@ -2,22 +2,24 @@ const path = require("path");
 const fs = require("fs");
 const Database = require("better-sqlite3");
 
-const dbFile = path.join(__dirname, "coachbot.sqlite");
+// Use /data directory for persistent storage, separate from code
+const dataDir = "/data";
+const dbFile = path.join(dataDir, "coachbot.sqlite");
 
 // Debug: log paths and permissions
-console.log("DB directory:", __dirname);
+console.log("DB directory:", dataDir);
 console.log("DB file path:", dbFile);
 
 // Ensure directory exists and is writable
 try {
-  if (!fs.existsSync(__dirname)) {
-    console.log("Creating DB directory...");
-    fs.mkdirSync(__dirname, { recursive: true });
+  if (!fs.existsSync(dataDir)) {
+    console.log("Creating data directory...");
+    fs.mkdirSync(dataDir, { recursive: true });
   }
 
   // Test write permissions
-  fs.accessSync(__dirname, fs.constants.W_OK);
-  console.log("DB directory is writable");
+  fs.accessSync(dataDir, fs.constants.W_OK);
+  console.log("Data directory is writable");
 
   // Check if DB file already exists
   if (fs.existsSync(dbFile)) {
@@ -30,12 +32,12 @@ try {
   }
 
   // Test creating a simple test file in the directory
-  const testFile = path.join(__dirname, "test.tmp");
+  const testFile = path.join(dataDir, "test.tmp");
   fs.writeFileSync(testFile, "test");
   fs.unlinkSync(testFile);
   console.log("Test file creation successful");
 } catch (error) {
-  console.error("DB directory/file error:", error.message);
+  console.error("Data directory/file error:", error.message);
   throw error;
 }
 
