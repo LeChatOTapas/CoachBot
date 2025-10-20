@@ -21,7 +21,7 @@ app.use(morgan("combined", { stream: logger.stream }));
 const port = process.env.PORT || 3000;
 
 // Utiliser la route pour toutes les requêtes vers /link
-app.use("/link", linkRoute);
+app.use("/api/link", linkRoute);
 
 // --- Configuration du client Discord ---
 const client = new Client({
