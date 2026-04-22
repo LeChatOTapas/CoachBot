@@ -1,91 +1,87 @@
+// commands/link.js
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
-const db = require("../db");
+const fetch = require("node-fetch");
 
-// Prepared statements
-const selectByDiscordId = db.prepare(
-  "SELECT * FROM users WHERE discord_id = ?"
-);
-const insertWaitingUser = db.prepare(
-  `INSERT INTO users (discord_id, username, status, coachfoot_id, pseudo, players_json)
-   VALUES (@discord_id, @username, 'waiting', NULL, NULL, NULL)`
-);
-const updateToWaiting = db.prepare(
-  `UPDATE users
-   SET status = 'waiting', coachfoot_id = NULL, pseudo = NULL, players_json = NULL, username = @username
-   WHERE discord_id = @discord_id`
-);
+const COACHFOOT_API = process.env.COACHFOOT_API_URL; // https://coachfoot.com/api
+const BOT_SECRET    = process.env.DISCORD_BOT_SECRET; // même valeur que dans .env Laravel
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("link")
     .setDescription("Lie votre compte Discord à votre compte CoachFoot."),
+
   async execute(interaction) {
-    const discordId = interaction.user.id;
-    const username = interaction.user.username;
-    const link = `https://coachfoot.com/api/link?username=${discordId}`;
+    await interaction.deferReply({ ephemeral: true });
+
+    const discordId       = interaction.user.id;
+    const discordUsername = interaction.user.username;
 
     try {
-      const userEntry = selectByDiscordId.get(discordId);
+      // 1. Vérifier si déjà lié
+      const statusRes = await fetch(`${COACHFOOT_API}/discord/status`, {
+        method:  "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Bot-Secret": BOT_SECRET,
+        },
+        body: JSON.stringify({ discord_id: discordId }),
+      });
 
-      // Vérifier si l'utilisateur est déjà connecté
-      if (userEntry && userEntry.status === "connected") {
-        const alreadyLinkedEmbed = new EmbedBuilder()
-          .setColor(0xffcc00)
-          .setTitle("Compte déjà lié")
-          .setDescription(
-            "Votre compte Discord est déjà associé à un compte CoachFoot."
-          )
-          .addFields(
-            {
-              name: "Pseudo CoachFoot",
-              value: `\`${userEntry.pseudo || "Inconnu"}\``,
-            },
-            {
-              name: "ID CoachFoot",
-              value: `\`${userEntry.coachfoot_id}\``,
-            }
-          )
-          .setTimestamp();
+      const statusData = await statusRes.json();
 
-        return interaction.reply({
-          embeds: [alreadyLinkedEmbed],
-          ephemeral: true,
+      if (statusData.linked) {
+        return interaction.editReply({
+          embeds: [
+            new EmbedBuilder()
+              .setColor(0xffcc00)
+              .setTitle("Compte déjà lié")
+              .setDescription("Votre compte Discord est déjà associé à CoachFoot.")
+              .addFields(
+                { name: "Pseudo", value: `\`${statusData.pseudo}\`` },
+                { name: "ID CoachFoot", value: `\`${statusData.coachfoot_id}\`` }
+              )
+              .setTimestamp(),
+          ],
         });
       }
 
-      // Si l'utilisateur n'est pas connecté, continuer comme avant
-      // le lien a déjà été défini plus haut
+      // 2. Générer un token de liaison
+      const tokenRes = await fetch(`${COACHFOOT_API}/discord/token/generate`, {
+        method:  "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Bot-Secret": BOT_SECRET,
+        },
+        body: JSON.stringify({
+          discord_id:       discordId,
+          discord_username: discordUsername,
+        }),
+      });
 
-      if (userEntry) {
-        // Mettre à jour l'entrée existante en 'waiting' et réinitialiser les champs de lien
-        updateToWaiting.run({ discord_id: discordId, username });
-      } else {
-        // Ajouter une nouvelle entrée en 'waiting'
-        insertWaitingUser.run({ discord_id: discordId, username });
+      if (!tokenRes.ok) {
+        throw new Error(`Token generation failed: ${tokenRes.status}`);
       }
 
-      const embed = new EmbedBuilder()
-        .setColor(0x0099ff)
-        .setTitle("Lien de votre compte")
-        .setDescription(
-          `Cliquez sur le lien ci-dessous pour lier votre compte CoachFoot.\n\n**Attention :** Ce lien est unique et personnel.`
-        )
-        .addFields({ name: "Votre lien", value: link })
-        .setTimestamp();
+      const { link } = await tokenRes.json();
 
-      await interaction.reply({
-        embeds: [embed],
-        ephemeral: true,
+      return interaction.editReply({
+        embeds: [
+          new EmbedBuilder()
+            .setColor(0x1e7d34)
+            .setTitle("Lier votre compte CoachFoot")
+            .setDescription(
+              `Cliquez sur le lien ci-dessous pour connecter votre compte.\n\n` +
+              `⏱️ Ce lien est valable **10 minutes** et à usage unique.`
+            )
+            .addFields({ name: "Votre lien", value: link })
+            .setTimestamp(),
+        ],
       });
-    } catch (error) {
-      console.error(
-        "Erreur avec la gestion de la base de données ou l'envoi de la réponse:",
-        error
-      );
-      await interaction.reply({
-        content:
-          "Une erreur est survenue lors de la création de votre lien. Veuillez réessayer.",
-        ephemeral: true,
+
+    } catch (err) {
+      console.error("Erreur /link :", err);
+      return interaction.editReply({
+        content: "Une erreur est survenue. Veuillez réessayer.",
       });
     }
   },
