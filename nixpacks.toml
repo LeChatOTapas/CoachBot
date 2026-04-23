@@ -1,6 +1,0 @@
-# Contenu du nouveau nixpacks.toml
-
-[phases.setup]
-# Utiliser nodejs_20 (avec underscore) ET python3
-# Cela permet à la fois d'avoir Node/NPM pour l'application et Python pour better-sqlite3
-nixPkgs = ["nodejs_20", "python3"]
