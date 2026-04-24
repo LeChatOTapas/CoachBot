@@ -3,7 +3,13 @@ import { randomUUID } from "crypto";
 import db from "../db/index.js";
 import type { LinkTokenRow } from "../types/index.js";
 
-const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+const rawSecret = process.env.JWT_SECRET ?? "";
+if (rawSecret.length < 32) {
+  throw new Error(
+    `JWT_SECRET is too short or missing (${rawSecret.length} chars). HS256 requires at least 32 characters.`,
+  );
+}
+const secret = new TextEncoder().encode(rawSecret);
 const expiresIn = process.env.JWT_EXPIRES_IN ?? "10m";
 
 export interface LinkTokenPayload extends JWTPayload {
