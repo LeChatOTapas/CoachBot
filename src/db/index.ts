@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS users (
   status       TEXT CHECK(status IN ('waiting','connected')) NOT NULL DEFAULT 'waiting',
   coachfoot_id TEXT UNIQUE,
   pseudo       TEXT,
+  club_name    TEXT,
   players_json TEXT,
   created_at   TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
@@ -30,7 +31,10 @@ CREATE TABLE IF NOT EXISTS link_tokens (
 `);
 
 try {
-  db.run(`
+  db.run(`ALTER TABLE users ADD COLUMN club_name TEXT`);
+} catch (_) {} // ignore if already exists
+
+try {
   CREATE TRIGGER IF NOT EXISTS users_updated_at
   AFTER UPDATE ON users
   FOR EACH ROW

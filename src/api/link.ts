@@ -14,7 +14,7 @@ app.post("/", async (c) => {
     return c.json({ error: "Corps de requête JSON invalide." }, 400);
   }
 
-  const { token, coachfoot_id, pseudo, players } = body;
+  const { token, coachfoot_id, pseudo, club_name, players } = body;
 
   if (!token || !coachfoot_id) {
     return c.json({ error: "token et coachfoot_id sont requis." }, 400);
@@ -90,10 +90,11 @@ app.post("/", async (c) => {
     consumeLinkToken(jti);
 
     db.prepare(
-      `UPDATE users SET status = 'connected', coachfoot_id = ?, pseudo = ?, players_json = ? WHERE discord_id = ?`,
+      `UPDATE users SET status = 'connected', coachfoot_id = ?, pseudo = ?, club_name = ?, players_json = ? WHERE discord_id = ?`,
     ).run(
       String(coachfoot_id),
       pseudo.trim(),
+      club_name ?? null,
       players ? JSON.stringify(players) : null,
       discord_id,
     );

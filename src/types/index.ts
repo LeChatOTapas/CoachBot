@@ -4,6 +4,7 @@ export interface User {
   status: "waiting" | "connected";
   coachfoot_id: string | null;
   pseudo: string | null;
+  club_name: string | null;
   players_json: string | null;
   created_at: string;
   updated_at: string;
@@ -20,6 +21,7 @@ export interface LinkRequestBody {
   token: string;
   coachfoot_id: string;
   pseudo: string;
+  club_name?: string | null;
   players?: unknown[];
 }
 
