@@ -2,6 +2,11 @@ import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import db from "../db/index.js";
 
+/** Retire le suffixe [club] du nickname si présent */
+function stripClubSuffix(nick: string): string {
+  return nick.replace(/\s*\[[^\]]*\]\s*$/, "").trim();
+}
+
 export const data = new SlashCommandBuilder()
   .setName("unlink")
   .setDescription(
@@ -18,6 +23,19 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     db.prepare("DELETE FROM link_tokens WHERE discord_id = ?").run(discordId);
 
     if (result.changes > 0) {
+      // Retirer le suffixe [club] du nickname sur le serveur principal uniquement
+      const guildId = process.env.GUILD_ID;
+      if (guildId) {
+        try {
+          const guild = await interaction.client.guilds.fetch(guildId);
+          const member = await guild.members.fetch(discordId);
+          const cleaned = stripClubSuffix(member.displayName);
+          if (cleaned !== member.displayName) {
+            await member.setNickname(cleaned || null);
+          }
+        } catch (_) {}
+      }
+
       const embed = new EmbedBuilder()
         .setColor(0x2ecc71)
         .setTitle("Compte dissocié")

@@ -26,6 +26,7 @@ slashCommandHandler(client);
 
 client.once(Events.ClientReady, () => {
   logger.info(`Connecté en tant que ${client.user!.tag}!`);
+  (globalThis as any).__discordClient = client;
 });
 
 const discordToken = process.env.DISCORD_TOKEN;

@@ -35,6 +35,7 @@ try {
 } catch (_) {} // ignore if already exists
 
 try {
+  db.run(`
   CREATE TRIGGER IF NOT EXISTS users_updated_at
   AFTER UPDATE ON users
   FOR EACH ROW

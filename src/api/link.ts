@@ -4,9 +4,22 @@ import db from "../db/index.js";
 import { verifyLinkToken, consumeLinkToken } from "../utils/token.js";
 import type { LinkRequestBody, User } from "../types/index.js";
 
+/** Retire le suffixe [club] du nickname si présent */
+function stripClubSuffix(nick: string): string {
+  return nick.replace(/\s*\[[^\]]*\]\s*$/, "").trim();
+}
+
+/** Renvoie true si le nickname contient déjà un suffixe [xxx] */
+function hasClubSuffix(nick: string): boolean {
+  return /\[[^\]]+\]/.test(nick);
+}
+
 const app = new Hono();
 
 app.post("/", async (c) => {
+  // client Discord injecté par index.ts
+  const discordClient: import("discord.js").Client | undefined = (c as any).env
+    ?.discordClient;
   let body: LinkRequestBody;
   try {
     body = await c.req.json<LinkRequestBody>();
@@ -102,6 +115,30 @@ app.post("/", async (c) => {
     logger.info(
       `Successfully linked discord_id ${discord_id} to coachfoot_id ${coachfoot_id}`,
     );
+
+    // Mettre à jour le nickname Discord sur le serveur principal uniquement
+    const guildId = process.env.GUILD_ID;
+    if (club_name && guildId) {
+      try {
+        const client: import("discord.js").Client | undefined = (
+          globalThis as any
+        ).__discordClient;
+        if (client) {
+          try {
+            const guild = await client.guilds.fetch(guildId);
+            const member = await guild.members.fetch(discord_id);
+            if (!hasClubSuffix(member.displayName)) {
+              const newNick = `${stripClubSuffix(member.displayName)} [${club_name}]`;
+              await member.setNickname(newNick);
+              logger.info(`Nickname updated for ${discord_id}: ${newNick}`);
+            }
+          } catch (_) {}
+        }
+      } catch (err) {
+        logger.warn(`Failed to update nickname for ${discord_id}:`, err);
+      }
+    }
+
     return c.json({ status: "validated" }, 201);
   } catch (error) {
     logger.error(`Error during link for discord_id ${discord_id}:`, error);
