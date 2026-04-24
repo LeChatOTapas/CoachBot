@@ -7,6 +7,7 @@ mkdirSync(path.dirname(dbFile), { recursive: true });
 
 const db = new Database(dbFile, { create: true });
 db.run("PRAGMA journal_mode = WAL");
+db.run("PRAGMA busy_timeout = 5000");
 
 // Run migrations inline so tables exist before any module-level db.prepare() calls
 db.run(`
