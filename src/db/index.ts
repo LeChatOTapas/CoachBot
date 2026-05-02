@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
   status       TEXT CHECK(status IN ('waiting','connected')) NOT NULL DEFAULT 'waiting',
   coachfoot_id TEXT UNIQUE,
   pseudo       TEXT,
-  club_name    TEXT,
+  alliance_name TEXT,
   players_json TEXT,
   created_at   TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
@@ -32,8 +32,13 @@ CREATE TABLE IF NOT EXISTS link_tokens (
 `);
 
 try {
-  db.run(`ALTER TABLE users ADD COLUMN club_name TEXT`);
+  db.run(`ALTER TABLE users ADD COLUMN alliance_name TEXT`);
 } catch (_) {} // ignore if already exists
+
+// Rename club_name → alliance_name on existing databases
+try {
+  db.run(`ALTER TABLE users RENAME COLUMN club_name TO alliance_name`);
+} catch (_) {} // ignore if already renamed or column doesn't exist
 
 try {
   db.run(`

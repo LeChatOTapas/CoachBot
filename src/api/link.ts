@@ -134,7 +134,7 @@ app.post("/", async (c) => {
     consumeLinkToken(jti);
 
     db.prepare(
-      `UPDATE users SET status = 'connected', coachfoot_id = ?, pseudo = ?, club_name = ?, players_json = ? WHERE discord_id = ?`,
+      `UPDATE users SET status = 'connected', coachfoot_id = ?, pseudo = ?, alliance_name = ?, players_json = ? WHERE discord_id = ?`,
     ).run(
       String(coachfoot_id),
       pseudo.trim(),

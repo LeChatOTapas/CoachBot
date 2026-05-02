@@ -4,7 +4,7 @@ import db from "../db/index.js";
 import type { User } from "../types/index.js";
 
 const selectByDiscordId = db.prepare(
-  "SELECT discord_id, username, status, coachfoot_id, pseudo, club_name, players_json FROM users WHERE discord_id = ?",
+  "SELECT discord_id, username, status, coachfoot_id, pseudo, alliance_name, players_json FROM users WHERE discord_id = ?",
 );
 
 export const data = new SlashCommandBuilder()
@@ -103,8 +103,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           inline: true,
         },
         {
-          name: "Club",
-          value: row.club_name ?? "Aucun club renseigné",
+          name: "Alliance",
+          value: row.alliance_name ?? "Aucune alliance renseignée",
           inline: true,
         },
         { name: "Joueurs", value: playersPreview },
