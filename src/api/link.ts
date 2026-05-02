@@ -9,6 +9,29 @@ function stripClubSuffix(nick: string): string {
   return nick.replace(/\s*\[[^\]]*\]\s*$/, "").trim();
 }
 
+function buildClubNickname(currentNick: string, clubName: string): string {
+  const MAX_NICK_LEN = 32;
+  const baseNick = stripClubSuffix(currentNick).trim();
+  const cleanClub = clubName.replace(/\s+/g, " ").trim();
+
+  if (!cleanClub) {
+    return baseNick.slice(0, MAX_NICK_LEN);
+  }
+
+  const suffix = ` [${cleanClub}]`;
+  if (suffix.length >= MAX_NICK_LEN) {
+    return `[${cleanClub}]`.slice(0, MAX_NICK_LEN);
+  }
+
+  const maxBaseLen = MAX_NICK_LEN - suffix.length;
+  const trimmedBase = baseNick.slice(0, maxBaseLen).trim();
+  if (!trimmedBase) {
+    return `[${cleanClub}]`.slice(0, MAX_NICK_LEN);
+  }
+
+  return `${trimmedBase}${suffix}`;
+}
+
 const app = new Hono();
 
 app.post("/", async (c) => {
@@ -136,8 +159,10 @@ app.post("/", async (c) => {
         try {
           const guild = await client.guilds.fetch(guildId);
           const member = await guild.members.fetch(discord_id);
-          const baseNick = stripClubSuffix(member.displayName);
-          const newNick = `${baseNick} [${normalizedClubName}]`;
+          const newNick = buildClubNickname(
+            member.displayName,
+            normalizedClubName,
+          );
 
           if (member.displayName !== newNick) {
             await member.setNickname(newNick);
