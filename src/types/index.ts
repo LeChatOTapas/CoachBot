@@ -21,7 +21,7 @@ export interface LinkRequestBody {
   token: string;
   coachfoot_id: string;
   pseudo: string;
-  club_name?: string | null;
+  alliance_name?: string | null;
   players?: unknown[];
 }
 

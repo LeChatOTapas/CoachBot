@@ -58,7 +58,7 @@ app.post("/", async (c) => {
     return c.json({ error: "Corps de requête JSON invalide." }, 400);
   }
 
-  const { token, coachfoot_id, pseudo, club_name, players } = body;
+  const { token, coachfoot_id, pseudo, alliance_name, players } = body;
 
   if (!token || !coachfoot_id) {
     return c.json({ error: "token et coachfoot_id sont requis." }, 400);
@@ -138,7 +138,7 @@ app.post("/", async (c) => {
     ).run(
       String(coachfoot_id),
       pseudo.trim(),
-      club_name ?? null,
+      alliance_name ?? null,
       players ? JSON.stringify(players) : null,
       discord_id,
     );
@@ -150,10 +150,10 @@ app.post("/", async (c) => {
     // Mettre à jour le nickname Discord sur le serveur principal uniquement
     const guildId = process.env.GUILD_ID;
     const normalizedClubName =
-      typeof club_name === "string" ? club_name.trim() : "";
+      typeof alliance_name === "string" ? alliance_name.trim() : "";
     if (!normalizedClubName) {
       logger.warn(
-        `Nickname not updated for ${discord_id}: missing or empty club_name`,
+        `Nickname not updated for ${discord_id}: missing or empty alliance_name`,
       );
     } else if (!guildId) {
       logger.warn(
