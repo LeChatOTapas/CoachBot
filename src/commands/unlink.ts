@@ -16,6 +16,10 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
   const discordId = interaction.user.id;
 
+  await interaction.deferReply({
+    flags: "Ephemeral",
+  });
+
   try {
     const result = db
       .prepare("DELETE FROM users WHERE discord_id = ?")
@@ -44,9 +48,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         )
         .setTimestamp();
 
-      return interaction.reply({
+      return interaction.editReply({
         embeds: [embed],
-        flags: "Ephemeral",
       });
     } else {
       const embed = new EmbedBuilder()
@@ -57,17 +60,17 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         )
         .setTimestamp();
 
-      return interaction.reply({
+      return interaction.editReply({
         embeds: [embed],
-        flags: "Ephemeral",
       });
     }
   } catch (error) {
     console.error("Erreur lors de la suppression des données:", error);
-    return interaction.reply({
-      content:
-        "Une erreur s'est produite lors de la dissociation. Veuillez réessayer plus tard.",
-      flags: "Ephemeral",
-    });
+    const content =
+      "Une erreur s'est produite lors de la dissociation. Veuillez réessayer plus tard.";
+    if (interaction.deferred || interaction.replied) {
+      return interaction.editReply({ content });
+    }
+    return interaction.reply({ content, flags: "Ephemeral" });
   }
 }

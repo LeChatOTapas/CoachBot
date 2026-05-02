@@ -29,10 +29,17 @@ export default function slashCommandHandler(client: Client): void {
           "Une erreur s'est produite lors de l'exécution de cette commande !",
         flags: "Ephemeral",
       };
-      if (interaction.replied || interaction.deferred) {
-        await interaction.followUp(msg);
-      } else {
-        await interaction.reply(msg);
+      try {
+        if (interaction.replied || interaction.deferred) {
+          await interaction.followUp(msg);
+        } else {
+          await interaction.reply(msg);
+        }
+      } catch (replyError) {
+        console.error(
+          `[SlashCommand:${interaction.commandName}] failed to send error response`,
+          replyError,
+        );
       }
     }
   });
