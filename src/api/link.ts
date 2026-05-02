@@ -18,18 +18,23 @@ function buildClubNickname(currentNick: string, clubName: string): string {
     return baseNick.slice(0, MAX_NICK_LEN);
   }
 
-  const suffix = ` [${cleanClub}]`;
-  if (suffix.length >= MAX_NICK_LEN) {
-    return `[${cleanClub}]`.slice(0, MAX_NICK_LEN);
+  if (baseNick.length >= MAX_NICK_LEN) {
+    return baseNick.slice(0, MAX_NICK_LEN);
   }
 
-  const maxBaseLen = MAX_NICK_LEN - suffix.length;
-  const trimmedBase = baseNick.slice(0, maxBaseLen).trim();
-  if (!trimmedBase) {
-    return `[${cleanClub}]`.slice(0, MAX_NICK_LEN);
+  const reserved = baseNick.length + 3;
+  const maxClubLen = MAX_NICK_LEN - reserved;
+
+  if (maxClubLen <= 0) {
+    return baseNick;
   }
 
-  return `${trimmedBase}${suffix}`;
+  const trimmedClub = cleanClub.slice(0, maxClubLen).trim();
+  if (!trimmedClub) {
+    return baseNick;
+  }
+
+  return `${baseNick} [${trimmedClub}]`;
 }
 
 const app = new Hono();
