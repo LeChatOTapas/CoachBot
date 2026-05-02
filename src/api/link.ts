@@ -11,15 +11,23 @@ function stripClubSuffix(nick: string): string {
 
 function buildClubNickname(currentNick: string, clubName: string): string {
   const MAX_NICK_LEN = 32;
+  const ELLIPSIS = "...";
   const baseNick = stripClubSuffix(currentNick).trim();
   const cleanClub = clubName.replace(/\s+/g, " ").trim();
 
+  const truncateWithEllipsis = (value: string, maxLen: number): string => {
+    if (maxLen <= 0) return "";
+    if (value.length <= maxLen) return value;
+    if (maxLen <= ELLIPSIS.length) return ELLIPSIS.slice(0, maxLen);
+    return `${value.slice(0, maxLen - ELLIPSIS.length).trim()}${ELLIPSIS}`;
+  };
+
   if (!cleanClub) {
-    return baseNick.slice(0, MAX_NICK_LEN);
+    return truncateWithEllipsis(baseNick, MAX_NICK_LEN);
   }
 
   if (baseNick.length >= MAX_NICK_LEN) {
-    return baseNick.slice(0, MAX_NICK_LEN);
+    return truncateWithEllipsis(baseNick, MAX_NICK_LEN);
   }
 
   const reserved = baseNick.length + 3;
@@ -29,7 +37,7 @@ function buildClubNickname(currentNick: string, clubName: string): string {
     return baseNick;
   }
 
-  const trimmedClub = cleanClub.slice(0, maxClubLen).trim();
+  const trimmedClub = truncateWithEllipsis(cleanClub, maxClubLen).trim();
   if (!trimmedClub) {
     return baseNick;
   }
