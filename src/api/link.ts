@@ -9,11 +9,6 @@ function stripClubSuffix(nick: string): string {
   return nick.replace(/\s*\[[^\]]*\]\s*$/, "").trim();
 }
 
-/** Renvoie true si le nickname contient déjà un suffixe [xxx] */
-function hasClubSuffix(nick: string): boolean {
-  return /\[[^\]]+\]/.test(nick);
-}
-
 const app = new Hono();
 
 app.post("/", async (c) => {
@@ -118,24 +113,43 @@ app.post("/", async (c) => {
 
     // Mettre à jour le nickname Discord sur le serveur principal uniquement
     const guildId = process.env.GUILD_ID;
-    if (club_name && guildId) {
-      try {
-        const client: import("discord.js").Client | undefined = (
-          globalThis as any
-        ).__discordClient;
-        if (client) {
-          try {
-            const guild = await client.guilds.fetch(guildId);
-            const member = await guild.members.fetch(discord_id);
-            if (!hasClubSuffix(member.displayName)) {
-              const newNick = `${stripClubSuffix(member.displayName)} [${club_name}]`;
-              await member.setNickname(newNick);
-              logger.info(`Nickname updated for ${discord_id}: ${newNick}`);
-            }
-          } catch (_) {}
+    const normalizedClubName =
+      typeof club_name === "string" ? club_name.trim() : "";
+    if (!normalizedClubName) {
+      logger.warn(
+        `Nickname not updated for ${discord_id}: missing or empty club_name`,
+      );
+    } else if (!guildId) {
+      logger.warn(
+        `Nickname not updated for ${discord_id}: GUILD_ID is not configured`,
+      );
+    } else {
+      const client: import("discord.js").Client | undefined =
+        ((globalThis as any).__discordClient as import("discord.js").Client) ??
+        discordClient;
+
+      if (!client) {
+        logger.warn(
+          `Nickname not updated for ${discord_id}: Discord client is unavailable`,
+        );
+      } else {
+        try {
+          const guild = await client.guilds.fetch(guildId);
+          const member = await guild.members.fetch(discord_id);
+          const baseNick = stripClubSuffix(member.displayName);
+          const newNick = `${baseNick} [${normalizedClubName}]`;
+
+          if (member.displayName !== newNick) {
+            await member.setNickname(newNick);
+            logger.info(`Nickname updated for ${discord_id}: ${newNick}`);
+          } else {
+            logger.info(
+              `Nickname already up-to-date for ${discord_id}: ${newNick}`,
+            );
+          }
+        } catch (err) {
+          logger.warn(`Failed to update nickname for ${discord_id}:`, err);
         }
-      } catch (err) {
-        logger.warn(`Failed to update nickname for ${discord_id}:`, err);
       }
     }
 
