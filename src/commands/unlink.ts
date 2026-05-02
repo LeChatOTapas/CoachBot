@@ -7,6 +7,12 @@ function stripClubSuffix(nick: string): string {
   return nick.replace(/\s*\[[^\]]*\]\s*$/, "").trim();
 }
 
+function isStaleInteractionError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const e = error as { code?: number; rawError?: { code?: number } };
+  return e.code === 10062 || e.code === 40060 || e.rawError?.code === 10062;
+}
+
 export const data = new SlashCommandBuilder()
   .setName("unlink")
   .setDescription(
@@ -16,9 +22,16 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
   const discordId = interaction.user.id;
 
-  await interaction.deferReply({
-    flags: "Ephemeral",
-  });
+  try {
+    await interaction.deferReply({
+      flags: "Ephemeral",
+    });
+  } catch (error) {
+    if (isStaleInteractionError(error)) {
+      return;
+    }
+    throw error;
+  }
 
   try {
     const result = db
