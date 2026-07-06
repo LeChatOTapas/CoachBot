@@ -15,10 +15,10 @@
   "license": "ISC",
   "dependencies": {
     "@discordjs/rest": "^2.6.1",
-    "discord-api-types": "^0.37.120",
+    "discord-api-types": "^0.38.49",
     "discord.js": "^14.26.4",
-    "hono": "^4.12.16",
-    "jose": "^5.10.0",
+    "hono": "^4.12.27",
+    "jose": "^6.2.3",
     "winston": "^3.19.0"
   },
   "devDependencies": {

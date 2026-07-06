@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { SlashCommandBuilder, EmbedBuilder, MessageFlags } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import db from "../db/index.js";
 
@@ -24,7 +24,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
   try {
     await interaction.deferReply({
-      flags: "Ephemeral",
+      flags: MessageFlags.Ephemeral,
     });
   } catch (error) {
     if (isStaleInteractionError(error)) {

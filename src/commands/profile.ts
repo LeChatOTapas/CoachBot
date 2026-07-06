@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { SlashCommandBuilder, EmbedBuilder, MessageFlags } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import db from "../db/index.js";
 import type { User } from "../types/index.js";
@@ -40,7 +40,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
       return interaction.reply({
         embeds: [embed],
-        flags: "Ephemeral",
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -58,7 +58,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
       return interaction.reply({
         embeds: [embed],
-        flags: "Ephemeral",
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -113,14 +113,14 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     return interaction.reply({
       embeds: [embed],
-      flags: "Ephemeral",
+      flags: MessageFlags.Ephemeral,
     });
   } catch (error) {
     console.error("Erreur lors de la récupération du profil:", error);
     return interaction.reply({
       content:
         "Une erreur s'est produite lors de l'affichage du profil. Veuillez réessayer plus tard.",
-      flags: "Ephemeral",
+      flags: MessageFlags.Ephemeral,
     });
   }
 }

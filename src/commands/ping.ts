@@ -8,9 +8,10 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
   const sent = await interaction.reply({
     content: "Ping...",
-    fetchReply: true,
+    withResponse: true,
   });
-  const botLatency = sent.createdTimestamp - interaction.createdTimestamp;
+  const botLatency =
+    sent.resource!.message!.createdTimestamp - interaction.createdTimestamp;
   const apiLatency = Math.round(interaction.client.ws.ping);
 
   const embed = new EmbedBuilder()

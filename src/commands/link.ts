@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { SlashCommandBuilder, EmbedBuilder, MessageFlags } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import db from "../db/index.js";
 import { generateLinkToken } from "../utils/token.js";
@@ -37,7 +37,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
       return interaction.reply({
         embeds: [embed],
-        flags: "Ephemeral",
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -65,14 +65,14 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     await interaction.reply({
       embeds: [embed],
-      flags: "Ephemeral",
+      flags: MessageFlags.Ephemeral,
     });
   } catch (error) {
     console.error("Erreur lors de la création du lien:", error);
     await interaction.reply({
       content:
         "Une erreur est survenue lors de la création de votre lien. Veuillez réessayer.",
-      flags: "Ephemeral",
+      flags: MessageFlags.Ephemeral,
     });
   }
 }
