@@ -6,46 +6,42 @@ import {
 } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 
-const RULE_FIELDS = [
+const RULE_SECTIONS = [
   {
-    name: "🤝 1. Respect et comportement",
-    value:
-      "Restez courtois avec tous les membres. Les insultes, menaces, provocations, humiliations, discriminations, propos haineux et harcèlement sont interdits, y compris en message privé.",
+    title: "🤝 Vivre ensemble",
+    color: 0x3498db,
+    description:
+      "**Respect avant tout**\n" +
+      "Soyez courtois. Les insultes, menaces, provocations, discriminations et le harcèlement ne sont pas tolérés.\n\n" +
+      "**Gardez les échanges agréables**\n" +
+      "Évitez le flood, les majuscules abusives, les mentions inutiles et les messages répétés.",
   },
   {
-    name: "🔞 2. Contenus interdits",
-    value:
-      "Aucun contenu sexuel, pornographique, suggestif, violent, choquant, illégal ou faisant l'apologie de comportements dangereux. Cela concerne les messages, images, vidéos, liens, pseudos et avatars.",
+    title: "🔞 Contenu et sécurité",
+    color: 0xe74c3c,
+    description:
+      "**Un serveur tout public**\n" +
+      "Les contenus sexuels, pornographiques, suggestifs, violents, choquants ou illégaux sont interdits — y compris dans les liens, avatars et pseudos.\n\n" +
+      "**Protégez votre vie privée**\n" +
+      "Ne partagez aucune donnée personnelle. Les arnaques, liens malveillants, tentatives de phishing et usurpations d'identité entraînent une exclusion.",
   },
   {
-    name: "📨 3. Publicité et démarchage",
-    value:
-      "La publicité, le recrutement et le démarchage sont interdits sans autorisation du staff. N'envoyez pas d'invitations vers d'autres serveurs et ne contactez pas les membres en privé pour promouvoir un serveur, service ou produit.",
+    title: "📨 Publicité et salons",
+    color: 0xf39c12,
+    description:
+      "**Aucun démarchage**\n" +
+      "La publicité, le recrutement, les invitations vers d'autres serveurs et la promotion en message privé sont interdits sans accord du staff.\n\n" +
+      "**Chaque salon a son utilité**\n" +
+      "Respectez le sujet des salons. En vocal, pas de cris, bruits volontaires, soundboards abusifs ou enregistrements sans consentement.",
   },
   {
-    name: "💬 4. Spam et utilisation des salons",
-    value:
-      "Pas de flood, messages répétés, majuscules abusives, mentions inutiles, réactions en masse ou commandes utilisées pour déranger. Utilisez chaque salon selon son sujet et évitez le hors-sujet.",
-  },
-  {
-    name: "🔐 5. Sécurité et vie privée",
-    value:
-      "Ne partagez aucune information personnelle ou confidentielle, qu'elle vous appartienne ou concerne quelqu'un d'autre. Les arnaques, liens malveillants, tentatives de phishing et usurpations d'identité entraînent une exclusion immédiate.",
-  },
-  {
-    name: "🎙️ 6. Salons vocaux",
-    value:
-      "Respectez la parole des autres. Les cris, bruits volontaires, soundboards abusifs, enregistrements sans consentement et déplacements destinés à perturber sont interdits.",
-  },
-  {
-    name: "🛡️ 7. Modération",
-    value:
-      "Respectez les décisions du staff et ne contournez pas une sanction avec un autre compte. Si vous souhaitez contester une décision, faites-le calmement en privé auprès de l'équipe de modération.",
-  },
-  {
-    name: "⚖️ 8. Règles générales",
-    value:
-      "Les Conditions d'utilisation et règles de Discord s'appliquent également. Le staff peut intervenir face à tout comportement nuisible non mentionné ici. Selon la gravité : avertissement, mute, expulsion ou bannissement.",
+    title: "🛡️ Modération et sanctions",
+    color: 0x9b59b6,
+    description:
+      "**Respectez les décisions du staff**\n" +
+      "Une contestation doit se faire calmement et en privé. Contourner une sanction avec un autre compte est interdit.\n\n" +
+      "**Application du règlement**\n" +
+      "Les règles de Discord restent applicables. Selon la gravité : rappel à l'ordre, avertissement, mute, expulsion ou bannissement.",
   },
 ];
 
@@ -72,21 +68,33 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
   const title = interaction.options.getString("titre") ?? "📜 Règlement du serveur";
   const customRules = interaction.options.getString("texte");
-  const embed = new EmbedBuilder()
+  const headerEmbed = new EmbedBuilder()
     .setColor(0x1e7d34)
     .setTitle(title)
     .setDescription(
       customRules ??
-        "Bienvenue ! Pour préserver un espace agréable et sécurisé, chaque membre doit respecter les règles suivantes.",
+        `Bienvenue sur **${interaction.guild.name}** !\n\nMerci de lire ces quelques règles. Elles permettent de conserver une communauté conviviale, sûre et agréable pour tout le monde.`,
     )
-    .setFooter({
-      text: `En restant sur ${interaction.guild.name}, vous acceptez ce règlement.`,
-    })
     .setTimestamp();
 
-  if (!customRules) embed.addFields(RULE_FIELDS);
+  const embeds = customRules
+    ? [headerEmbed]
+    : [
+        headerEmbed,
+        ...RULE_SECTIONS.map((section) =>
+          new EmbedBuilder()
+            .setColor(section.color)
+            .setTitle(section.title)
+            .setDescription(section.description),
+        ),
+        new EmbedBuilder()
+          .setColor(0x1e7d34)
+          .setDescription(
+            `✅ **En restant sur ${interaction.guild.name}, vous acceptez ce règlement.**\nMerci de contribuer à la bonne ambiance du serveur !`,
+          ),
+      ];
 
-  await interaction.channel?.send({ embeds: [embed] });
+  await interaction.channel?.send({ embeds });
   return interaction.reply({
     content: "✅ Le règlement a été publié.",
     flags: MessageFlags.Ephemeral,
