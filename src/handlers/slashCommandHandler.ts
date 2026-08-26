@@ -6,8 +6,16 @@ import * as link from "../commands/link.js";
 import * as unlink from "../commands/unlink.js";
 import * as profile from "../commands/profile.js";
 import * as notificationRoles from "../commands/notification-roles.js";
+import * as reglement from "../commands/reglement.js";
 
-export const commands: Command[] = [ping, link, unlink, profile, notificationRoles];
+export const commands: Command[] = [
+  ping,
+  link,
+  unlink,
+  profile,
+  notificationRoles,
+  reglement,
+];
 
 function isStaleInteractionError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
