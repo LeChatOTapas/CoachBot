@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import logger from "./logger.js";
 import slashCommandHandler from "./handlers/slashCommandHandler.js";
 import linkRoute from "./api/link.js";
+import { registerCommands } from "./registerCommands.js";
 
 // ── HTTP server (Hono on Bun) ──────────────────────────────────────────────
 const honoApp = new Hono();
@@ -24,9 +25,18 @@ const client = new Client({
 
 slashCommandHandler(client);
 
-client.once(Events.ClientReady, () => {
+client.once(Events.ClientReady, async () => {
   logger.info(`Connecté en tant que ${client.user!.tag}!`);
   (globalThis as any).__discordClient = client;
+
+  try {
+    const deployment = await registerCommands(client.application.id);
+    logger.info(
+      `${deployment.count} commandes slash synchronisées (${deployment.scope}) pour l'application ${client.application.id}.`,
+    );
+  } catch (error) {
+    logger.error("Impossible de synchroniser les commandes slash :", error);
+  }
 });
 
 const discordToken = process.env.DISCORD_TOKEN;
