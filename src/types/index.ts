@@ -30,4 +30,8 @@ export interface Command {
   execute(
     interaction: import("discord.js").ChatInputCommandInteraction,
   ): Promise<unknown>;
+  customIdPrefix?: string;
+  handleButton?(
+    interaction: import("discord.js").ButtonInteraction,
+  ): Promise<unknown>;
 }

@@ -5,8 +5,9 @@ import * as ping from "../commands/ping.js";
 import * as link from "../commands/link.js";
 import * as unlink from "../commands/unlink.js";
 import * as profile from "../commands/profile.js";
+import * as notificationRoles from "../commands/notification-roles.js";
 
-export const commands: Command[] = [ping, link, unlink, profile];
+export const commands: Command[] = [ping, link, unlink, profile, notificationRoles];
 
 function isStaleInteractionError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
@@ -21,6 +22,23 @@ for (const command of commands) {
 
 export default function slashCommandHandler(client: Client): void {
   client.on("interactionCreate", async (interaction) => {
+    if (interaction.isButton()) {
+      const command = commands.find(
+        (item) =>
+          item.customIdPrefix &&
+          item.handleButton &&
+          interaction.customId.startsWith(item.customIdPrefix),
+      );
+      if (!command?.handleButton) return;
+
+      try {
+        await command.handleButton(interaction);
+      } catch (error) {
+        console.error(`[Button:${interaction.customId}]`, error);
+      }
+      return;
+    }
+
     if (!interaction.isChatInputCommand()) return;
 
     const command = commandCollection.get(interaction.commandName);

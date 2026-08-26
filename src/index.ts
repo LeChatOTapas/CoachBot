@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, Events } from "discord.js";
+import { Client, GatewayIntentBits, Events, PermissionFlagsBits } from "discord.js";
 import { Hono } from "hono";
 import logger from "./logger.js";
 import slashCommandHandler from "./handlers/slashCommandHandler.js";
@@ -24,6 +24,26 @@ const client = new Client({
 });
 
 slashCommandHandler(client);
+
+client.on(Events.MessageCreate, async (message) => {
+  if (message.author.bot || message.content.trim().toLowerCase() !== "+upd") return;
+  if (!message.inGuild() || !message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
+    await message.reply("Cette commande est réservée aux administrateurs.");
+    return;
+  }
+
+  try {
+    const applicationId = client.application?.id;
+    if (!applicationId) throw new Error("Application Discord indisponible");
+    const deployment = await registerCommands(applicationId);
+    await message.reply(
+      `✅ ${deployment.count} commandes slash synchronisées (${deployment.scope}).`,
+    );
+  } catch (error) {
+    logger.error("Échec de +upd :", error);
+    await message.reply("❌ Impossible de synchroniser les commandes slash. Consulte les logs.");
+  }
+});
 
 client.once(Events.ClientReady, async () => {
   logger.info(`Connecté en tant que ${client.user!.tag}!`);
